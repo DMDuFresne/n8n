@@ -1,0 +1,86 @@
+# ============================================
+# n8n Deployment - Git Ignore Rules
+# ============================================
+
+# CRITICAL: Environment files and secrets
+.env
+*.env
+.env.*
+!env.example
+
+# Backup files
+backups/
+*.tar.gz
+*.backup
+*.sql
+*.dump
+*.sha256
+
+# Log files
+logs/
+*.log
+*.out
+*.err
+*.pid
+
+# n8n data and files
+files/
+data/
+n8n_data/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# Setup state files
+.setup_complete
+.initialized
+
+# Docker override files (local development)
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Diagnostic and debug files
+diagnostic-report-*.txt
+debug/
+core.*
+
+# Certificates (if any)
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Keep these
+!.gitignore
+!README.md
+!AUDIT_REPORT.md
+!LICENSE

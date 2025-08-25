@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:1.58.2
+    container_name: n8n
+    restart: unless-stopped
+    # NO EXPOSED PORTS! Cloudflare Tunnel handles this
+    # ports:
+    #   - "5678:5678"
+
+    environment:
+      # Core Configuration
+      - N8N_HOST=${DOMAIN}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${DOMAIN}
+      - GENERIC_TIMEZONE=${TIMEZONE}
+      - TZ=${TIMEZONE}
+      
+      # Security - Data Encryption
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      
+      # Database
+      - DB_TYPE=sqlite
+      - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
+      
+      # Executions Cleanup
+      - EXECUTIONS_DATA_PRUNE=${EXECUTIONS_DATA_PRUNE}
+      - EXECUTIONS_DATA_MAX_AGE=${EXECUTIONS_DATA_MAX_AGE}
+      - EXECUTIONS_DATA_PRUNE_TIMEOUT=${EXECUTIONS_DATA_PRUNE_TIMEOUT}
+      
+      # Performance
+      - N8N_CONCURRENCY_PRODUCTION_LIMIT=${N8N_CONCURRENCY_PRODUCTION_LIMIT}
+      - NODE_OPTIONS=${NODE_OPTIONS}
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./files:/files
+    networks:
+      - n8n-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    networks:
+      - n8n-net
+    depends_on:
+      - n8n
+
+networks:
+  n8n-net:
+    driver: bridge
+
+volumes:
+  n8n_data:
