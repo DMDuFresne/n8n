@@ -49,6 +49,11 @@ services:
       resources:
         limits:
           memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -59,6 +64,11 @@ services:
       - n8n-net
     depends_on:
       - n8n
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   n8n-net:

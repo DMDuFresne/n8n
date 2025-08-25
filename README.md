@@ -1,8 +1,8 @@
 # 🚀 Production n8n Deployment with Cloudflare Zero Trust
 
-> **Enterprise-grade workflow automation using Vultr infrastructure and Cloudflare's global network**
+> **production(ish)-grade workflow automation using Vultr infrastructure and Cloudflare's global network**
 
-[![Deploy Time](https://img.shields.io/badge/Deploy%20Time-15%20minutes-brightgreen)](https://github.com)
+[![Deploy Time](https://img.shields.io/badge/Deploy%20Time-20--30%20minutes-brightgreen)](https://github.com)
 [![Monthly Cost](https://img.shields.io/badge/Cost-~$12%2Fmonth-blue)](https://vultr.com)
 [![Security](https://img.shields.io/badge/Security-Zero%20Trust-purple)](https://cloudflare.com)
 [![Support](https://img.shields.io/badge/Support-Community-orange)](https://community.n8n.io)
@@ -70,7 +70,7 @@ docker-compose up -d
 # Create your admin account on first access
 ```
 
-**Done!** Your n8n is live with enterprise security. 🎉
+**Done!** Your n8n is live with professional security. 🎉
 
 ---
 
@@ -83,6 +83,7 @@ docker-compose up -d
 | Service | Tier | Monthly Cost | Notes |
 |---------|------|--------------|-------|
 | **Vultr VPS** | 2GB RAM | $12 | Minimum recommended |
+| **Database** | SQLite | $0 | Perfect for small businesses (2-10 users, handles hundreds of workflows) |
 | **Vultr VPS** | 4GB RAM | $24 | Production recommended |
 | **Cloudflare** | Free | $0 | Sufficient for most use cases |
 | **Domain** | Varies | $1-2 | If purchasing new |
@@ -95,7 +96,7 @@ docker-compose up -d
 - [ ] **Domain Name** - Must use Cloudflare DNS
 - [ ] **SSH Client** - Terminal (Mac/Linux) or [PuTTY](https://putty.org/) (Windows)
 - [ ] **Password Manager** - To store generated credentials
-- [ ] **10-15 minutes** - For initial deployment
+- [ ] **30-90 minutes** - For initial deployment
 
 ### 🖥️ Recommended Server Specifications
 
@@ -157,6 +158,8 @@ graph TB
 ```
 
 ### 🔒 Security Model
+
+**Security Model:** SSH-only access through Vultr. No exposed ports. Simple and secure.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -623,41 +626,13 @@ Rule 6: User Agent Filtering
 
 #### 🔐 Secure Token Management
 
-> **⚠️ SECURITY RISK**: Cloudflare tunnel tokens can appear in Docker logs if container startup fails.
-
-**Option 1: Use Docker Secrets (Recommended)**
-
-```yaml
-# In docker-compose.yml
-services:
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token-file /run/secrets/tunnel_token
-    secrets:
-      - tunnel_token
-    
-secrets:
-  tunnel_token:
-    file: ./tunnel_token.txt
-```
-
-**Option 2: Environment File Protection**
+**Environment File Protection**
 
 ```bash
-# Secure .env file permissions
+# .env file permissions are already secured by the setup script
+# The file has 600 permissions (read/write for owner only)
 chmod 600 .env
 chown root:root .env
-
-# Add to docker-compose.yml healthcheck
-healthcheck:
-  test: ["CMD", "test", "-r", "/.env", "||", "exit", "1"]
-```
-
-**Option 3: External Secret Management**
-
-```bash
-# Using HashiCorp Vault (advanced)
-export TUNNEL_TOKEN=$(vault kv get -field=token secret/n8n/tunnel)
 ```
 
 #### Server Hardening
@@ -995,8 +970,7 @@ docker-compose logs -f                # Stream logs
 docker ps                             # List containers
 
 # === Backup & Recovery ===
-# Create backup using docker commands
-# Backup n8n volume manually
+# Create backup manually when needed:
 docker run --rm -v n8n_n8n_data:/data -v $(pwd)/backups:/backup alpine tar czf /backup/n8n-data-backup.tar.gz -C /data .
 
 # === Monitoring ===
@@ -1069,13 +1043,21 @@ Monitor and control costs:
 
 ---
 
+## Updating n8n
+
+To update to a new n8n version:
+1. Edit docker-compose.yml, change version number
+2. Run: `docker-compose pull`
+3. Run: `docker-compose down`
+4. Run: `docker-compose up -d`
+
 ## 🔄 Version History
 
 - **v1.0** (2024) - Initial release
   - Vultr VPS optimized deployment
   - Cloudflare Zero Trust integration
   - Docker volume-based storage
-  - Automated backup system
+  - Manual backup command reference
   - Health monitoring
 
 ## 🤝 Contributing

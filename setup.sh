@@ -520,6 +520,7 @@ configure_firewall() {
   }
 }
 EOF
+            systemctl daemon-reload || log_warning "Failed to reload systemd daemon"
             systemctl restart docker || log_warning "Docker restart needed later"
         fi
         
@@ -711,7 +712,13 @@ collect_user_configuration() {
                 8) 
                     read -p "Enter timezone (e.g., America/Denver): " new_tz
                     if [[ -n "$new_tz" ]]; then
-                        valid_choice=true
+                        # Validate timezone exists
+                        if [[ ! -f "/usr/share/zoneinfo/$new_tz" ]]; then
+                            log_error "Invalid timezone: $new_tz"
+                            valid_choice=false
+                        else
+                            valid_choice=true
+                        fi
                     else
                         log_warning "Timezone cannot be empty"
                     fi
@@ -804,6 +811,11 @@ if [[ $DISK_USAGE -gt 85 ]]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - WARNING: Disk usage is ${DISK_USAGE}%" >> "$LOG_FILE"
 fi
 
+# Check tunnel connection
+if ! docker logs cloudflared 2>&1 | tail -20 | grep -q "Connection.*registered"; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Tunnel connection issue detected" >> "$LOG_FILE"
+fi
+
 # Check memory
 MEM_AVAILABLE=$(free -m | awk 'NR==2 {print int($7)}')
 if [[ $MEM_AVAILABLE -lt 200 ]]; then
@@ -820,6 +832,18 @@ EOF
     else
         log_success "Health monitoring already configured"
     fi
+    
+    # Setup log rotation
+    cat > /etc/logrotate.d/n8n << 'EOF'
+/var/log/n8n-health.log {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+}
+EOF
+    log_success "Log rotation configured for health monitoring logs"
 }
 
 # ============================================
